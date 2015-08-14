@@ -118,7 +118,7 @@ my $dy = -1.0/$c[1] * 180.0/$pi; # negative because gnuplot inverts y by
 
 my $gnuplot_script = <<EOF;
 attenuation = 1.5
-set size ratio -1
+set size ratio -1./cos($center_lat * pi/180.0)
 plot "$montage_filename" binary filetype=png dx=$dx dy=$dy center=($centerx,$centery) using (\$1/attenuation):(\$2/attenuation):(\$3/attenuation) with rgbimage notitle
 EOF
 
