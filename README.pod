@@ -1,0 +1,87 @@
+=head1 NAME
+
+osmgnuplot.pl - Download OSM tiles, and make a gnuplot script to render them
+
+=head1 SYNOPSIS
+
+ $ osmgnuplot.pl --center 34.094719,-118.235779 --rad 300m --zoom 16
+ Downloading http://tile.openstreetmap.org/16/11243/26158.png
+ Downloading http://tile.openstreetmap.org/16/11244/26158.png
+ Downloading http://tile.openstreetmap.org/16/11243/26159.png
+ Downloading http://tile.openstreetmap.org/16/11244/26159.png
+ Done! Gnuplot script 'montage_34.094719_-118.235779_300m_16.gp' uses the image 'montage_34.094719_-118.235779_300m_16.png'
+
+ $ gnuplot -persist montage_34.094719_-118.235779_300m_16.gp
+ [a gnuplot window pops up, showing OSM tiles]
+
+=head1 DESCRIPTION
+
+This script downloads OSM tiles, glues them together into a single image, and
+generates a gnuplot script to render this image, aligned correctly to its
+latitude, longitude. While this in itself is not useful, the gnuplot script can
+be expanded to plot other things on top of the map, to make it easy to visualize
+geospatial data.
+
+The generated gnuplot script darkens the map a bit to make the extra stuff stand
+out (=attenuation= parameter in the resulting script).
+
+Gnuplot assumes a linear mapping between pixels in the gnuplot window and
+latitude/longitude, even though this isn't strictly true in the tiles we
+download: the longitude I<is> linear but the latitude is not. The script assumes
+that we're looking at a small-enough range of latitudes such that the mapping is
+linear enough. It fits a line to samples of the nonlinear curve, and uses this
+line when making the plot.
+
+The communication with the OSM tile server assumes some caching. If an
+appropriately-named tile already exists on disk, the =If-None-Match= header
+field is used to send over the MD5 hash of the tile on disk. If the tile on the
+server has the same hash, the server doesn't bother sending it over, which
+results in bandwidth savings.
+
+=head1 REQUIRED ARGUMENTS
+
+=over
+
+=item --center <lat>,<lon>
+
+Center point
+
+=for Euclid:
+  lat.type: number
+  lon.type: number
+
+=item --rad <radius>
+
+How far around the center to query. This must include units (support C<m>, C<km>
+and C<miles>; no whitespace between the number and units).
+
+=for Euclid:
+  radius.type: /[0-9]+(?:\.[-9]*)?(?:miles?|km|m)/
+
+=item --zoom <zoom>
+
+The OSM zoom level
+
+=for Euclid:
+  zoom.type: integer, zoom > 0 && zoom <= 18
+
+=for Euclid:
+  radius.type: /[0-9]+(?:\.[-9]*)?(?:miles?|km|m)/
+
+=back
+
+=head1 REPOSITORY
+
+L<https://github.com/dkogan/osmgnuplot>
+
+=head1 AUTHOR
+
+Dima Kogan, C<< <dima@secretsauce.net> >>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2015 Dima Kogan.
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the Lesser General Public License version 3, as published by the
+Free Software Foundation. Full text at http://www.gnu.org/licenses/lgpl.html
