@@ -130,6 +130,9 @@ my $gnuplot_script = <<EOF;
 #   $thiscmd @ARGV_original
 
 attenuation = 1.5
+
+set autoscale noextend
+
 set size ratio -1./cos($center_lat * pi/180.0)
 plot "$montage_filename" binary filetype=png dx=$dx dy=$dy center=($centerx,$centery) using (\$1/attenuation):(\$2/attenuation):(\$3/attenuation) with rgbimage notitle
 EOF
