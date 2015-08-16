@@ -225,6 +225,18 @@ this option, we suppress this logic and always download fresh tiles.
 
 =back
 
+=head1 REPOSITORY
+
+L<https://github.com/dkogan/osmgnuplot>
+
 =head1 AUTHOR
 
 Dima Kogan, C<< <dima@secretsauce.net> >>
+
+=head1 LICENSE AND COPYRIGHT
+
+Copyright 2015 Dima Kogan.
+
+This program is free software; you can redistribute it and/or modify it under
+the terms of the Lesser General Public License version 3, as published by the
+Free Software Foundation. Full text at http://www.gnu.org/licenses/lgpl.html
