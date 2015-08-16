@@ -99,27 +99,40 @@ my $centerx = ($tilex[0]*256 + $tilex[1]*256 + 255) / 2;
 $centerx = $centerx/256 * 2**(-$zoom) * 360 - 180;
 
 # sources of Geo::OSM::Tiles say that
-sub px_from_lat
+sub tile_from_lat
 {
-    my $lat = shift;
-    return (1 - log(tan($lat) + 1.0/cos($lat))/$pi)/2 * 2**$zoom * 256;
+    # input is in degrees, relative to $lat[0]
+    # output is floating-point tile index
+    #
+    # This is done to keep the x variables near 0 to make the slope estimate
+    # accurate
+
+    my $lat_here = shift;
+
+    $lat_here += $lat[0];
+    $lat_here *= $pi/180.0;
+
+    return (1 - log(tan($lat_here) + 1.0/cos($lat_here))/$pi)/2 * 2**$zoom;
 }
 # This is (clearly) non-linear, but for small spans of latitude should be linear
 # enough. I sample this function through my range, apply linear least squares to
 # fit a line to it, and get dy and centery from this line
-my $lat_fit = zeros(10)->xlinvals($lat[0]*$pi/180, $lat[1]*$pi/180);
-my $px_fit= pdl( map { px_from_lat($_) } $lat_fit->list );
-my ($fit, $coeffs) = linfit1d($lat_fit, $px_fit, PDL::cat( $lat_fit->ones,
-                                                           $lat_fit));
+my $lat_fit = zeros(10)->xlinvals(0, $lat[1]-$lat[0]);
+my $tile_fit= pdl( map { tile_from_lat($_) } $lat_fit->list );
+my ($fit, $coeffs) = linfit1d($lat_fit, $tile_fit, PDL::cat( $lat_fit->ones,
+                                                             $lat_fit));
 my @c = $coeffs->list;
 
-# I now have px ~ $c[0] + lat*c[1];
+# I now have tile ~ $c[0] + (lat - $lat[0])*$c[1];
 
-my $centery = ($tiley[0]*256 + $tiley[1]*256 + 255) / 2; # px
-$centery = ($centery - $c[0]) / $c[1] * 180/$pi;
-my $dy = -1.0/$c[1] * 180.0/$pi; # negative because gnuplot inverts y by
-                                 # default, so the negative slope this thing has
-                                 # is not needed
+my $centery = ($tiley[0] + $tiley[1] + 255/256) / 2; # tile
+$centery = ($centery - $c[0]) / $c[1] + $lat[0];
+
+# c1 is tiles/deg. I want dy = (1/c1) (deg/tiles) / 256 (px/tile)
+my $dy = -1/($c[1]*256); # negative because gnuplot inverts y by
+                         # default, so the negative slope this thing has
+                         # is not needed
+
 
 
 my $gnuplot_script = <<EOF;
