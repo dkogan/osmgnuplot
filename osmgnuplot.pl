@@ -81,11 +81,11 @@ for my $y ($tiley[1]..$tiley[0]) # vertical tiles are ordered backwards because
     }
 }
 
-my $width  = $tilex[1] - $tilex[0] + 1;
-my $height = $tiley[1] - $tiley[0] + 1;
+my $Ntiles_width  = $tilex[1] - $tilex[0] + 1;
+my $Ntiles_height = $tiley[1] - $tiley[0] + 1;
 
 my $montage_filename = "montage_${center_lat}_${center_lon}_$ARGV{'--rad'}_$zoom.png";
-system("montage @montage_tile_list -tile ${width}x${height} -geometry +0+0 $montage_filename") == 0
+system("montage @montage_tile_list -tile ${Ntiles_width}x${Ntiles_height} -geometry +0+0 $montage_filename") == 0
   or die "Error running montage: $@";
 
 
