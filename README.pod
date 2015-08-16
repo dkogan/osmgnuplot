@@ -23,7 +23,7 @@ be expanded to plot other things on top of the map, to make it easy to visualize
 geospatial data.
 
 The generated gnuplot script darkens the map a bit to make the extra stuff stand
-out (=attenuation= parameter in the resulting script).
+out (C<attenuation> parameter in the resulting script).
 
 Gnuplot assumes a linear mapping between pixels in the gnuplot window and
 latitude/longitude, even though this isn't strictly true in the tiles we
@@ -33,7 +33,7 @@ linear enough. It fits a line to samples of the nonlinear curve, and uses this
 line when making the plot.
 
 The communication with the OSM tile server assumes some caching. If an
-appropriately-named tile already exists on disk, the =If-None-Match= header
+appropriately-named tile already exists on disk, the C<If-None-Match> header
 field is used to send over the MD5 hash of the tile on disk. If the tile on the
 server has the same hash, the server doesn't bother sending it over, which
 results in bandwidth savings.
