@@ -60,9 +60,9 @@ for my $y ($tiley[1]..$tiley[0]) # vertical tiles are ordered backwards because
 
         my @get_args = (":content_file" => $filename);
 
-        if( !$ARGV{'--nocache'} && -r $filename )
+        if( -r $filename )
         {
-            # a local file exists AND we weren't asked to ignore local caches
+            # a local file exists. use it if possible
 
             # compute the checksum of the local file
             local  $/ = undef;
@@ -170,17 +170,39 @@ osmgnuplot.pl - Download OSM tiles, and make a gnuplot script to render them
 
 =head1 SYNOPSIS
 
- $ osmgnuplot.pl --center 34.12,-118.34 --radius 20miles --zoom 16
+ $ osmgnuplot.pl --center 34.094719,-118.235779 --rad 300m --zoom 16
+ Downloading http://tile.openstreetmap.org/16/11243/26158.png
+ Downloading http://tile.openstreetmap.org/16/11244/26158.png
+ Downloading http://tile.openstreetmap.org/16/11243/26159.png
+ Downloading http://tile.openstreetmap.org/16/11244/26159.png
+ Done! Gnuplot script 'montage_34.094719_-118.235779_300m_16.gp' uses the image 'montage_34.094719_-118.235779_300m_16.png'
+
+ $ gnuplot -persist montage_34.094719_-118.235779_300m_16.gp
+ [a gnuplot window pops up, showing OSM tiles]
 
 =head1 DESCRIPTION
 
-This script downloads OSM tiles and generates a gnuplot script to render them.
-While this in itself is not useful, the gnuplot script can be expanded to plot
-other things on top of the map, to make it easy to visualize geospatial data.
+This script downloads OSM tiles, glues them together into a single image, and
+generates a gnuplot script to render this image, aligned correctly to its
+latitude, longitude. While this in itself is not useful, the gnuplot script can
+be expanded to plot other things on top of the map, to make it easy to visualize
+geospatial data.
 
-This script tries to detect already-downloaded tiles by computing a checksum of
-a candidate cache local file, and comparing to what the server tells us in a
-header. This can be turned off with --nocache
+The generated gnuplot script darkens the map a bit to make the extra stuff stand
+out (=attenuation= parameter in the resulting script).
+
+Gnuplot assumes a linear mapping between pixels in the gnuplot window and
+latitude/longitude, even though this isn't strictly true in the tiles we
+download: the longitude I<is> linear but the latitude is not. The script assumes
+that we're looking at a small-enough range of latitudes such that the mapping is
+linear enough. It fits a line to samples of the nonlinear curve, and uses this
+line when making the plot.
+
+The communication with the OSM tile server assumes some caching. If an
+appropriately-named tile already exists on disk, the =If-None-Match= header
+field is used to send over the MD5 hash of the tile on disk. If the tile on the
+server has the same hash, the server doesn't bother sending it over, which
+results in bandwidth savings.
 
 =head1 REQUIRED ARGUMENTS
 
@@ -196,8 +218,8 @@ Center point
 
 =item --rad <radius>
 
-How far around the center to query. This must include units (no whitespace
-between number and units).
+How far around the center to query. This must include units (support C<m>, C<km>
+and C<miles>; no whitespace between the number and units).
 
 =for Euclid:
   radius.type: /[0-9]+(?:\.[-9]*)?(?:miles?|km|m)/
@@ -211,17 +233,6 @@ The OSM zoom level
 
 =for Euclid:
   radius.type: /[0-9]+(?:\.[-9]*)?(?:miles?|km|m)/
-
-=back
-
-=head1 OPTIONAL ARGUMENTS
-
-=over
-
-=item --nocache
-
-By default we don't download tiles we have already (based on a checksum). With
-this option, we suppress this logic and always download fresh tiles.
 
 =back
 
