@@ -40,8 +40,9 @@ my $Rearth = 6371000.0; # meters
 
 my @lat = ($center_lat - $rad/$Rearth * 180.0/$pi,
            $center_lat + $rad/$Rearth * 180.0/$pi );
-my @lon = ($center_lon - $rad/$Rearth * 180.0/$pi * cos($center_lat * $pi/180.0),
-           $center_lon + $rad/$Rearth * 180.0/$pi * cos($center_lat * $pi/180.0) );
+
+my @lon = ($center_lon - $rad/$Rearth * 180.0/$pi / cos($center_lat * $pi/180.0),
+           $center_lon + $rad/$Rearth * 180.0/$pi / cos($center_lat * $pi/180.0) );
 
 my @tilex = map { lon2tilex($_, $zoom ) } @lon;
 my @tiley = map { lat2tiley($_, $zoom ) } @lat;
