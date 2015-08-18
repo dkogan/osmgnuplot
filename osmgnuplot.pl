@@ -186,7 +186,9 @@ This script downloads OSM tiles, glues them together into a single image, and
 generates a gnuplot script to render this image, aligned correctly to its
 latitude, longitude. While this in itself is not useful, the gnuplot script can
 be expanded to plot other things on top of the map, to make it easy to visualize
-geospatial data.
+geospatial data. Example plots appear here:
+
+L<http://notes.secretsauce.net/notes/2015/08/16_least-convenient-location-in-los-angeles-from-koreatown.html>
 
 The generated gnuplot script darkens the map a bit to make the extra stuff stand
 out (C<attenuation> parameter in the resulting script).
