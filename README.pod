@@ -72,6 +72,14 @@ The OSM zoom level
 
 =back
 
+=head1 DEPENDENCIES
+
+I use non-core perl modules C<Getopt::Euclid>, C<Geo::OSM::Tiles>,
+C<LWP::UserAgent> and C<PDL>. I also use the C<montage> tool from
+C<imagemagick>. On a Debian box the following should be sufficient:
+
+ apt-get install libgetopt-euclid-perl libgeo-osm-tiles-perl libwww-perl pdl imagemagick
+
 =head1 REPOSITORY
 
 L<https://github.com/dkogan/osmgnuplot>
