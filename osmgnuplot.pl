@@ -15,15 +15,7 @@ my @thiscmd_tokens = split('/',$0);
 my $thiscmd =  $thiscmd_tokens[-1];
 Getopt::Euclid->process_args(\@ARGV);
 
-
-
 my $pi = 3.14159265359;
-
-
-my $userAgent = LWP::UserAgent->new;
-
-
-
 
 my $center_lat = $ARGV{'--center'}{lat};
 my $center_lon = $ARGV{'--center'}{lon};
@@ -46,48 +38,7 @@ my @lon = ($center_lon - $rad/$Rearth * 180.0/$pi / cos($center_lat * $pi/180.0)
 my @tilex = map { lon2tilex($_, $zoom ) } @lon;
 my @tiley = map { lat2tiley($_, $zoom ) } @lat;
 
-my @montage_tile_list;
-for my $y ($tiley[1]..$tiley[0]) # vertical tiles are ordered backwards because
-                                 # that's how the mapping function works
-{
-    for my $x ($tilex[0]..$tilex[1])
-    {
-        my $path = tile2path($x, $y, $zoom);
-        my $tileurl = "http://tile.openstreetmap.org/$path";
-        my $filename = "tile_${x}_${y}_${zoom}.png";
-
-
-        my @get_args = (":content_file" => $filename);
-
-        if( -r $filename )
-        {
-            # a local file exists. use it if possible
-
-            # compute the checksum of the local file
-            local  $/ = undef;
-            open TILE, $filename;
-            my $md5_cache = join('', unpack('H*', md5(<TILE>)));
-            close TILE;
-
-            # tells server to only send data if needed
-            push @get_args, ('if-none-match' => "\"$md5_cache\"" );
-        }
-
-        say STDERR "Downloading $tileurl";
-        $userAgent->get($tileurl, @get_args)
-          or die "Error downloading '$tileurl'";
-
-        push @montage_tile_list, $filename;
-    }
-}
-
-my $Ntiles_width  = $tilex[1] - $tilex[0] + 1;
-my $Ntiles_height = $tiley[1] - $tiley[0] + 1;
-
-my $montage_filename = "montage_${center_lat}_${center_lon}_$ARGV{'--rad'}_$zoom.png";
-system("montage @montage_tile_list -tile ${Ntiles_width}x${Ntiles_height} -geometry +0+0 $montage_filename") == 0
-  or die "Error running montage: $@";
-
+my $montage_filename = make_montage(\@tilex, \@tiley, $zoom);
 
 
 # I now generate a gnuplot scrript. Here I require dx,dy,centerx,centery to
@@ -116,6 +67,9 @@ $centery = ($centery - $c[0]) / $c[1] + $lat[0];
 my $dy = -1/($c[1]*256); # negative because gnuplot inverts y by
                          # default, so the negative slope this thing has
                          # is not needed
+
+
+
 
 
 
@@ -150,6 +104,59 @@ say "Done! Gnuplot script '$gpfilename' uses the image '$montage_filename'";
 
 
 
+
+
+
+
+sub make_montage
+{
+    my ($tilex, $tiley, $zoom) = @_;
+
+    my $userAgent = LWP::UserAgent->new;
+    my @montage_tile_list;
+    for my $y ($tiley->[1]..$tiley->[0]) # vertical tiles are ordered backwards because
+      # that's how the mapping function works
+    {
+        for my $x ($tilex->[0]..$tilex->[1])
+        {
+            my $path = tile2path($x, $y, $zoom);
+            my $tileurl = "http://tile.openstreetmap.org/$path";
+            my $filename = "tile_${x}_${y}_${zoom}.png";
+
+
+            my @get_args = (":content_file" => $filename);
+
+            if ( -r $filename )
+            {
+                # a local file exists. use it if possible
+
+                # compute the checksum of the local file
+                local  $/ = undef;
+                open TILE, $filename;
+                my $md5_cache = join('', unpack('H*', md5(<TILE>)));
+                close TILE;
+
+                # tells server to only send data if needed
+                push @get_args, ('if-none-match' => "\"$md5_cache\"" );
+            }
+
+            say STDERR "Downloading $tileurl";
+            $userAgent->get($tileurl, @get_args)
+              or die "Error downloading '$tileurl'";
+
+            push @montage_tile_list, $filename;
+        }
+    }
+
+    my $Ntiles_width  = $tilex->[1] - $tilex->[0] + 1;
+    my $Ntiles_height = $tiley->[1] - $tiley->[0] + 1;
+
+    my $montage_filename = "montage_${center_lat}_${center_lon}_$ARGV{'--rad'}_$zoom.png";
+    system("montage @montage_tile_list -tile ${Ntiles_width}x${Ntiles_height} -geometry +0+0 $montage_filename") == 0
+      or die "Error running montage: $@";
+
+    return $montage_filename;
+}
 
 # This is derived from Geo::OSM::Tiles
 sub tile_from_lat
