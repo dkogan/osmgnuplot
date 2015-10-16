@@ -5,7 +5,6 @@ use warnings;
 use Getopt::Euclid qw(:defer);
 use feature ':5.10';
 
-use Geo::OSM::Tiles qw( :all );
 use LWP::UserAgent;
 use Digest::MD5 qw(md5);
 use PDL;
@@ -99,27 +98,11 @@ my $dx = 360 * 2**(-$zoom) / 256;
 my $centerx = ($tilex[0]*256 + $tilex[1]*256 + 255) / 2;
 $centerx = $centerx/256 * 2**(-$zoom) * 360 - 180;
 
-# sources of Geo::OSM::Tiles say that
-sub tile_from_lat
-{
-    # input is in degrees, relative to $lat[0]
-    # output is floating-point tile index
-    #
-    # This is done to keep the x variables near 0 to make the slope estimate
-    # accurate
-
-    my $lat_here = shift;
-
-    $lat_here += $lat[0];
-    $lat_here *= $pi/180.0;
-
-    return (1 - log(tan($lat_here) + 1.0/cos($lat_here))/$pi)/2 * 2**$zoom;
-}
 # This is (clearly) non-linear, but for small spans of latitude should be linear
 # enough. I sample this function through my range, apply linear least squares to
 # fit a line to it, and get dy and centery from this line
 my $lat_fit = zeros(10)->xlinvals(0, $lat[1]-$lat[0]);
-my $tile_fit= pdl( map { tile_from_lat($_) } $lat_fit->list );
+my $tile_fit= pdl( map { tile_from_lat($_,$lat[0],$zoom) } $lat_fit->list );
 my ($fit, $coeffs) = linfit1d($lat_fit, $tile_fit, PDL::cat( $lat_fit->ones,
                                                              $lat_fit));
 my @c = $coeffs->list;
@@ -160,6 +143,58 @@ close GP;
 
 say "Done! Gnuplot script '$gpfilename' uses the image '$montage_filename'";
 
+
+
+
+
+
+
+
+
+# This is derived from Geo::OSM::Tiles
+sub tile_from_lat
+{
+    # input is in degrees, relative to $lat[0]
+    # output is floating-point tile index
+    #
+    # This is done to keep the x variables near 0 to make the slope estimate
+    # accurate
+
+    my ($lat_here, $lat0, $zoom) = @_;
+
+    $lat_here += $lat0;
+    $lat_here *= $pi/180.0;
+
+    return (1 - log(tan($lat_here) + 1.0/cos($lat_here))/$pi)/2 * 2**$zoom;
+}
+
+
+
+# These come directly from Geo::OSM::Tiles. I needed my own tile_from_lat()
+# anyway, so I may as well copy these here to not require the dependency.
+#
+# These are Copyright (C) 2008-2010 by Rolf Krahl, distributed under the same
+# terms as Perl itself, either Perl version 5.8.8 or, at your option, any later
+# version of Perl 5 you may have available.
+sub lon2tilex
+{
+    my ($lon, $zoom) = @_;
+    return int( ($lon+180)/360 * 2**$zoom );
+}
+sub lat2tiley
+{
+    my ($lat, $zoom) = @_;
+    my $lata = $lat*$pi/180;
+
+    my $s = sin($lata);
+    my $c = cos($lata);
+    return int( (1 - log( ($s + 1.)/$c )/$pi)/2 * 2**$zoom );
+}
+sub tile2path
+{
+    my ($tilex, $tiley, $zoom) = @_;
+    return "$zoom/$tilex/$tiley.png";
+}
 
 
 __END__
@@ -240,11 +275,11 @@ The OSM zoom level
 
 =head1 DEPENDENCIES
 
-I use non-core perl modules C<Getopt::Euclid>, C<Geo::OSM::Tiles>,
-C<LWP::UserAgent> and C<PDL>. I also use the C<montage> tool from
-C<imagemagick>. On a Debian box the following should be sufficient:
+I use non-core perl modules C<Getopt::Euclid>, C<LWP::UserAgent> and C<PDL>. I
+also use the C<montage> tool from C<imagemagick>. On a Debian box the following
+should be sufficient:
 
- apt-get install libgetopt-euclid-perl libgeo-osm-tiles-perl libwww-perl pdl imagemagick
+ apt-get install libgetopt-euclid-perl libwww-perl pdl imagemagick
 
 =head1 REPOSITORY
 
