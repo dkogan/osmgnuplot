@@ -27,6 +27,13 @@ if   ($unit =~ /mile/) { $rad *= 5280 * 12 * 2.54 / 100; }
 elsif($unit =~ /km/ )  { $rad *= 1000; }
 
 
+my $url = $ARGV{'--serverpath'};
+$url =~ s{/*$}{}g;        # remove any trailing /
+
+my $url_alphanumeric = $url;
+$url_alphanumeric =~ s{^[a-z]+://}{}i; # remove leading http://, https://, ftp:// and so on
+$url_alphanumeric =~ s/[^0-9a-z_]/./gi;
+
 
 # Get the lat/lon bounds I want
 my @lat = ($center_lat - $rad/$Rearth * 180.0/$pi,
@@ -94,8 +101,8 @@ sub make_montage
         for my $x ($tilex[0]..$tilex[1])
         {
             my $path = tile2path($x, $y, $zoom);
-            my $tileurl = "http://tile.openstreetmap.org/$path";
-            my $filename = "tile_${x}_${y}_${zoom}.png";
+            my $tileurl = "$url/$path";
+            my $filename = "tile_${url_alphanumeric}__${x}_${y}_${zoom}.png";
 
 
             my @get_args = (":content_file" => $filename);
@@ -284,6 +291,21 @@ The OSM zoom level
 
 =for Euclid:
   radius.type: /[0-9]+(?:\.[-9]*)?(?:miles?|km|m)/
+
+=back
+
+=head1 OPTIONAL ARGUMENTS
+
+=over
+
+=item --serverpath <url>
+
+The base URL to grab tiles from. We default to the OSM tile server:
+C<http://tile.openstreetmap.org>
+
+=for Euclid:
+  url.type: string
+  url.default: "http://tile.openstreetmap.org"
 
 =back
 
