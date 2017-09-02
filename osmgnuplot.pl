@@ -146,23 +146,6 @@ sub make_montage
     return ($montage_filename, $width, $height);
 }
 
-# This is derived from Geo::OSM::Tiles
-sub tile_from_lat
-{
-    # input is in degrees, relative to $lat[0]
-    # output is floating-point tile index
-    #
-    # This is done to keep the x variables near 0 to make the slope estimate
-    # accurate
-
-    my ($lat_here, $lat0, $zoom) = @_;
-
-    $lat_here += $lat0;
-    $lat_here *= $pi/180.0;
-
-    return (1 - log(tan($lat_here) + 1.0/cos($lat_here))/$pi)/2 * 2**$zoom;
-}
-
 sub get_pixel_mapping
 {
     my ($width, $height, $lat, $lon) = @_;
