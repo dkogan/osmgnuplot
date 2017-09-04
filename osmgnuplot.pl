@@ -110,8 +110,8 @@ lat_to_px(x) = (1 - log( (sin(x*pi/180) + 1.)/cos(x*pi/180) )/pi)/2. * 2.**$zoom
 set link x2 via px_to_lon(x) inverse lon_to_px(x)
 set link y2 via px_to_lat(y) inverse lat_to_px(y)
 
-set x2range [$lon_cropped->[0]:$lon_cropped->[1]]
-set y2range [$lat_cropped->[0]:$lat_cropped->[1]]
+set xrange [0:$width-1]
+set yrange [$height-1:0]
 
 unset xtics
 unset ytics
