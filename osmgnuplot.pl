@@ -120,9 +120,10 @@ set grid front
 set x2tics mirror $tic_spacing
 set y2tics mirror $tic_spacing
 
-
 set size ratio -1
 
+set x2label "Longitude (degrees)"
+set y2label "Latitude (degrees)"
 plot "$montage_filename" binary filetype=png flipy using (\$1/attenuation):(\$2/attenuation):(\$3/attenuation) with rgbimage notitle axis x1y1
 EOF
 
