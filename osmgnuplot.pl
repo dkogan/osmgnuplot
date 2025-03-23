@@ -8,6 +8,7 @@ use feature ':5.10';
 use LWP::UserAgent;
 use Digest::MD5 qw(md5);
 use Math::Trig qw(asin);
+use Time::HiRes 'usleep';
 
 my @ARGV_original = @ARGV;
 my @thiscmd_tokens = split('/',$0);
@@ -202,6 +203,7 @@ sub make_montage
                 say STDERR "Downloading $tileurl into '$filename'";
                 $userAgent->get($tileurl, @get_args)
                   or die "Error downloading '$tileurl'";
+                usleep(100_000);
             }
 
             push @montage_tile_list, $filename;
