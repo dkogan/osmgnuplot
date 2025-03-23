@@ -197,9 +197,12 @@ sub make_montage
                 # tells server to only send data if needed
                 push @get_args, ('if-none-match' => "\"$md5_cache\"" );
             }
-            say STDERR "Downloading $tileurl into '$filename'";
-            $userAgent->get($tileurl, @get_args)
-              or die "Error downloading '$tileurl'";
+            else
+            {
+                say STDERR "Downloading $tileurl into '$filename'";
+                $userAgent->get($tileurl, @get_args)
+                  or die "Error downloading '$tileurl'";
+            }
 
             push @montage_tile_list, $filename;
         }
