@@ -170,6 +170,8 @@ sub make_montage
                                                              # to HIGH latitudes
 
     my $userAgent = LWP::UserAgent->new;
+    $userAgent->agent("osmgnuplot.pl");
+
     my @montage_tile_list;
     for my $y ($tiley[0]..$tiley[1])
     {
@@ -416,7 +418,7 @@ C<http://tile.openstreetmap.org>
 
 =for Euclid:
   url.type: string
-  url.default: "http://tile.openstreetmap.org"
+  url.default: "https://tile.openstreetmap.org"
 
 =back
 
