@@ -143,8 +143,8 @@ my $feedgnuplot_script = <<EOF;
 
 feedgnuplot \\
   --cmds '$cmds' \\
-  --set xrange '[0:$width-1]'  \\
-  --set yrange '[$height-1:0]' \\
+  --set 'xrange [0:$width-1]'  \\
+  --set 'yrange [$height-1:0]' \\
   --equation '"$montage_filename" binary filetype=png flipy using (\$1/attenuation):(\$2/attenuation):(\$3/attenuation) with rgbimage notitle axis x1y1'
 EOF
 
