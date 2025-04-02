@@ -171,13 +171,13 @@ import gnuplotlib as gp
 
 cmds = r'''$cmds'''
 
-# With gnuplotlib 0.43, gnuplot 6.0.0 I see the gnuplotlib test code result in
-# the inverted y axis being ignored. For now I work-around this with
-# "notest=True" here
+# With gnuplotlib 0.43 I see the gnuplotlib test code result in the inverted y
+# axis being ignored. I work-around this with "notest=True". This workaround is
+# unnecessary as of gnuplotlib 0.44
 
 # gnuplotlib 0.43 doesn't have facilities to request an axis other than x1y2,
-# while here I need x2y2. Until that is fixed, I fake it with with "_with"
-# keyword
+# while here I need x2y2. I work-around this with the "_with" keyword. This
+# workaround is unnecessary as of gnuplotlib 0.44
 
 
 # import numpy as np
