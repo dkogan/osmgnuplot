@@ -9,6 +9,7 @@ use LWP::UserAgent;
 use Digest::MD5 qw(md5);
 use Math::Trig qw(asin);
 use Time::HiRes 'usleep';
+use Image::Size;
 
 my @ARGV_original = @ARGV;
 my @thiscmd_tokens = split('/',$0);
@@ -18,6 +19,11 @@ Getopt::Euclid->process_args(\@ARGV);
 if( $ARGV{'--feedgnuplot'} && $ARGV{'--gnuplotlib'}) {
     die("--feedgnuplot and --gnuplotlib are mutually exclusive");
 }
+
+# will be filled-in later
+my $tilewidth     = $ARGV{'--tilewidth'};
+my $tilewidth_log = int(log($tilewidth)/log(2) + 0.5);
+
 
 my $pi     = 3.14159265359;
 my $Rearth = 6371000.0; # meters
@@ -99,11 +105,11 @@ lon_offset_px = $lon_px_cropped->[0]
 s1_cos(x)     = (sin(x)+1)/cos(x)
 inv_s1_cos(x) = asin( (x**2 - 1)/(x**2 + 1) )
 
-px_to_lon(x) = (x + lon_offset_px)/(256. * 2.**$zoom)*360. - 180.
-lon_to_px(x) = (x+180.)/360. * 2.**$zoom * 256 - lon_offset_px
+px_to_lon(x) = (x + lon_offset_px)/($tilewidth. * 2.**$zoom)*360. - 180.
+lon_to_px(x) = (x+180.)/360. * 2.**$zoom * $tilewidth - lon_offset_px
 
-px_to_lat(x) = inv_s1_cos(exp((1 - (x + lat_offset_px)/(2.**$zoom * 256) *2)*pi))*180./pi
-lat_to_px(x) = (1 - log( (sin(x*pi/180) + 1.)/cos(x*pi/180) )/pi)/2. * 2.**$zoom * 256 - lat_offset_px
+px_to_lat(x) = inv_s1_cos(exp((1 - (x + lat_offset_px)/(2.**$zoom * $tilewidth) *2)*pi))*180./pi
+lat_to_px(x) = (1 - log( (sin(x*pi/180) + 1.)/cos(x*pi/180) )/pi)/2. * 2.**$zoom * $tilewidth - lat_offset_px
 
 
 set link x2 via px_to_lon(x) inverse lon_to_px(x)
@@ -304,6 +310,11 @@ sub make_montage
                 usleep(100_000);
             }
 
+            my ($width, $height) = Image::Size::imgsize($filename);
+            if($width != $tilewidth) {
+                die("Incorrect --tilewidth. Re-run with  --tilewidth $width");
+            }
+
             push @montage_tile_list, $filename;
         }
     }
@@ -314,8 +325,8 @@ sub make_montage
     my $Ntiles_height = $tiley[1] - $tiley[0] + 1;
 
     # The LOCAL pixel coords of the corners inside my uncropped montage
-    my @lon_px = map { int( 0.5 + lon2pixels($_, $zoom) - 256*$tilex[0] ) }         @lon;
-    my @lat_px = map { int( 0.5 + lat2pixels($_, $zoom) - 256*$tiley[0] ) } reverse @lat;
+    my @lon_px = map { int( 0.5 + lon2pixels($_, $zoom) - $tilewidth*$tilex[0] ) }         @lon;
+    my @lat_px = map { int( 0.5 + lat2pixels($_, $zoom) - $tilewidth*$tiley[0] ) } reverse @lat;
 
 
     my $width  = $lon_px[1] - $lon_px[0] + 1;
@@ -330,10 +341,10 @@ sub make_montage
 
     # I cropped the image to some discrete pixel values, so I recompute the
     # lat/lon coords of the corners EXACTLY
-    my @lon_px_cropped = ($tilex[0]*256 + $lon_px[0],
-                          $tilex[0]*256 + $lon_px[0] + $width-1);
-    my @lat_px_cropped = ($tiley[0]*256 + $lat_px[0],
-                          $tiley[0]*256 + $lat_px[0] + $height-1);
+    my @lon_px_cropped = ($tilex[0]*$tilewidth + $lon_px[0],
+                          $tilex[0]*$tilewidth + $lon_px[0] + $width-1);
+    my @lat_px_cropped = ($tiley[0]*$tilewidth + $lat_px[0],
+                          $tiley[0]*$tilewidth + $lat_px[0] + $height-1);
     my @lon_cropped = ( pixels2lon($lon_px_cropped[0], $zoom),
                         pixels2lon($lon_px_cropped[1], $zoom) );
     my @lat_cropped = ( pixels2lat($lat_px_cropped[1], $zoom),
@@ -375,16 +386,17 @@ sub get_approximate_pixel_mapping
 sub lon2pixels
 {
     my ($lon, $zoom) = @_;
-    return ($lon+180.)/360. * 2.**($zoom+8.);
+    return ($lon+180.)/360. * 2.**($zoom + $tilewidth_log);
 }
 sub lon2tilex
 {
-    return int(lon2pixels(@_) / 256);
+    return int(lon2pixels(@_) / $tilewidth);
 }
+
 sub pixels2lon
 {
     my ($px, $zoom) = @_;
-    return $px * 2.**(-$zoom-8.) * 360.0 - 180.0;
+    return $px * 2.**(-$zoom - $tilewidth_log) * 360.0 - 180.0;
 }
 sub lat2pixels
 {
@@ -393,11 +405,11 @@ sub lat2pixels
 
     my $s = sin($lata);
     my $c = cos($lata);
-    return (1.0 - log( ($s + 1.)/$c )/$pi) * 2.**($zoom+7);
+    return (1.0 - log( ($s + 1.)/$c )/$pi) * 2.**($zoom + $tilewidth_log-1);
 }
 sub lat2tiley
 {
-    return int(lat2pixels(@_) / 256);
+    return int(lat2pixels(@_) / $tilewidth);
 }
 sub pixels2lat
 {
@@ -412,7 +424,7 @@ sub pixels2lat
         return asin( ($x**2. - 1)/($x**2. + 1.) );
     }
 
-    return inv_s1_cos(exp((1.0 - $px * 2.**(-$zoom-7.))*$pi)) / $pi * 180.0;
+    return inv_s1_cos(exp((1.0 - $px * 2.**(-$zoom - ($tilewidth_log-1) ))*$pi)) / $pi * 180.0;
 }
 sub tile2path
 {
@@ -538,6 +550,16 @@ The Referer HTTP header. Optional. Some servers require this.
 =for Euclid:
   referer.type: string
   referer.default: ""
+
+=item --tilewidth <tilewidth>
+
+The width of each tile. 256 by default. Some tile server have bigger tiles, and
+you MUST pass the correct dimensions here. If the wrong value is given, the
+script will check, and barf
+
+=for Euclid:
+  tilewidth.type: integer
+  tilewidth.default: 256
 
 =item  --feedgnuplot
 
