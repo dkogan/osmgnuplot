@@ -36,10 +36,11 @@ elsif($unit =~ /km/ )  { $rad *= 1000; }
 my $url = $ARGV{'--serverpath'};
 $url =~ s{/*$}{}g;        # remove any trailing /
 
-my $url_alphanumeric = $url;
+my $urltail = $ARGV{'--urltail'};
+
+my $url_alphanumeric = $url . '-' . $urltail;
 $url_alphanumeric =~ s{^[a-z]+://}{}i; # remove leading http://, https://, ftp:// and so on
 $url_alphanumeric =~ s/[^0-9a-z_]/./gi;
-
 
 # Get the lat/lon bounds I want
 my @lat = ($center_lat - $rad/$Rearth * 180.0/$pi,
@@ -266,13 +267,17 @@ sub make_montage
     my $userAgent = LWP::UserAgent->new;
     $userAgent->agent("osmgnuplot.pl");
 
+    if($ARGV{'--referer'}) {
+        $userAgent->default_header('Referer' => $ARGV{'--referer'});
+    }
+
     my @montage_tile_list;
     for my $y ($tiley[0]..$tiley[1])
     {
         for my $x ($tilex[0]..$tilex[1])
         {
             my $path = tile2path($x, $y, $zoom);
-            my $tileurl = "$url/$path";
+            my $tileurl = "$url/$path$urltail";
             my $filename = "tile_${url_alphanumeric}__${x}_${y}_${zoom}.png";
 
 
@@ -517,6 +522,22 @@ C<http://tile.openstreetmap.org>
 =for Euclid:
   url.type: string
   url.default: "https://tile.openstreetmap.org"
+
+=item --urltail <tail>
+
+A string to append to each url. Usually contains an API key, styling, etc
+
+=for Euclid:
+  tail.type: string
+  tail.default: ""
+
+=item --referer <referer>
+
+The Referer HTTP header. Optional. Some servers require this.
+
+=for Euclid:
+  referer.type: string
+  referer.default: ""
 
 =item  --feedgnuplot
 
