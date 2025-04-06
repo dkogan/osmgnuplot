@@ -427,7 +427,10 @@ sub pixels2lat
 sub tile2path
 {
     my ($tilex, $tiley, $zoom) = @_;
-    return "$zoom/$tilex/$tiley.png";
+    if(!$ARGV{'--swapxy'})
+    { return "$zoom/$tilex/$tiley.png"; }
+    else
+    { return "$zoom/$tiley/$tilex.png"; }
 }
 
 
@@ -558,6 +561,10 @@ script will check, and barf
 =for Euclid:
   tilewidth.type: integer
   tilewidth.default: 256
+
+=item  --swapxy
+
+If given, swap the x,y in the tile URLs. Some servers require this
 
 =item  --feedgnuplot
 
