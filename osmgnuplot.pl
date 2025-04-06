@@ -95,8 +95,6 @@ else
 
 
 my $cmds = <<EOF;
-attenuation = 1.5
-
 set autoscale noextend
 
 lat_offset_px = $lat_px_cropped->[0]
@@ -144,7 +142,7 @@ $cmds
 set xrange [0:$width-1]
 set yrange [$height-1:0]
 
-plot "$montage_filename" binary filetype=png flipy using (\$1/attenuation):(\$2/attenuation):(\$3/attenuation) with rgbimage notitle axes x1y1
+plot "$montage_filename" binary filetype=png flipy with rgbimage notitle axes x1y1
 
 pause mouse close
 EOF
@@ -162,7 +160,7 @@ feedgnuplot \\
   --cmds '$cmds' \\
   --set 'xrange [0:$width-1]'  \\
   --set 'yrange [$height-1:0]' \\
-  --equation '"$montage_filename" binary filetype=png flipy using (\$1/attenuation):(\$2/attenuation):(\$3/attenuation) with rgbimage notitle axes x1y1'
+  --equation '"$montage_filename" binary filetype=png flipy with rgbimage notitle axes x1y1'
 EOF
 
 my $gnuplotlib_script = <<EOF;
@@ -195,7 +193,7 @@ gp.plot( # latlon[:,1], latlon[:,0], _with = 'linespoints axes x2y2',
         cmds      = cmds,
         _xrange   = (0, $width-1),
         _yrange   = ($height-1, 0),
-        equation  = '"$montage_filename" binary filetype=png flipy using (\$1/attenuation):(\$2/attenuation):(\$3/attenuation) with rgbimage notitle axes x1y1',
+        equation  = '"$montage_filename" binary filetype=png flipy with rgbimage notitle axes x1y1',
         notest    = True,
         wait      = True,
        )
